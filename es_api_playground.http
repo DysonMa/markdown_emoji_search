@@ -1,0 +1,71 @@
+###
+GET {{ES_host}}/emoji/_search
+content-type: application/json
+
+{
+  "query": {
+      "match_all": {}
+  },
+  "size": 10
+  
+}
+
+###
+GET {{ES_host}}/emoji/_search
+Content-Type: application/json
+
+{
+    "aggs": {
+        "category": {
+            "terms": {
+                "field": "category.keyword",
+                "size": 10,
+                "order": {
+                    "max_score": "desc"
+                }
+            },
+            "aggs": {
+                "max_score": {
+                    "max": {
+                        "script": "_score"
+                    }
+                }
+            }
+        },
+        "sub_category": {
+            "terms": {
+                "field": "sub_category.keyword",
+                "size": 10,
+                "order": {
+                    "max_score": "desc"
+                }
+            },
+            "aggs": {
+                "max_score": {
+                    "max": {
+                        "script": "_score"
+                    }
+                }
+            }
+        }
+    },
+    "query": {
+        "match_all": {
+            "query": "body",
+            "fields": ["name^3", "category", "sub_category"]
+        }
+    },
+    "suggest": {
+        "name" : {
+            "prefix" : "quest",
+            "completion" : {
+                "field" : "name.completion",
+                "skip_duplicates": true,
+                "fuzzy":{
+                    "fuzziness": 2
+                }
+            }
+        }
+    },
+    "size":10
+}

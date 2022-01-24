@@ -1,16 +1,18 @@
 from flask import request
-from flask_restful import Api, Resource, reqparse
+from flask_restful import Api, Resource
 import os, sys
-from searchEngine.SearchEngineHandler import SearchEngineHandler
+from SearchEngineHandler import SearchEngineHandler
 
 class ApiHandler(Resource):
     def get(self):
-        return SearchEngineHandler().search()
+        return SearchEngineHandler().search(query="question", size=1)
 
     def post(self):
-        # print(self)
         args = request.get_json(force=True)
-        
         query = args.get("query", "")
+        size = args.get("size", 0)
         print(query)
-        return SearchEngineHandler().search(query)
+        print(size)
+        if size=="all":
+            return SearchEngineHandler().searchAll()
+        return SearchEngineHandler().search(query, size)

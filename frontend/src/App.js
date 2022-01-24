@@ -7,36 +7,63 @@ import { useNavigate, useLocation } from "react-router-dom";
 
 const EmojiCards = ({ data }) => {
   if (!data) return null;
-  return data.map((emoji, idx) => {
+
+  const copy = (text) => {
+    navigator.clipboard.writeText(`:${text}:`);
+  };
+
+  return data.hits.hits.map((emoji, idx) => {
     emoji = emoji._source;
     return (
-      <Card style={{ width: "18rem" }} key={idx}>
-        <Card.Img variant="top" src={emoji.url} />
+      <Card style={{ width: "18rem", margin: 12 }} key={idx}>
+        <Card.Img
+          variant="top"
+          src={window?.["imgs_url"]?.[emoji] ?? emoji.url}
+        />
         <Card.Body>
-          <Card.Title>{emoji.name}</Card.Title>
+          <Card.Title>
+            <code>:{emoji.name}:</code>
+          </Card.Title>
           <Card.Subtitle>{emoji.category}</Card.Subtitle>
           <Card.Subtitle>{emoji.sub_category}</Card.Subtitle>
-          {/* <Card.Text>
-        Some quick example text to build on the card title and make up the bulk of
-        the card's content.
-      </Card.Text> */}
-          <Button variant="primary">Go somewhere</Button>
+          <Button variant="primary" onClick={() => copy(emoji.name)}>
+            Copy
+          </Button>
         </Card.Body>
       </Card>
     );
   });
 };
 
+const Category = ({ category, setFilter }) => {
+  if (!category) return null;
+  console.log(category);
+  return category.category.buckets.map((category, idx) => (
+    <div
+      key={idx}
+      style={{ margin: 12 }}
+      onClick={() => setFilter(category.key)}
+    >
+      <u>
+        {category.key}&nbsp;&nbsp;{category.doc_count}
+      </u>
+    </div>
+  ));
+};
+
 function App() {
   const [data, setData] = useState(null);
+  const [category, setCategory] = useState(null);
+  const [filter, setFilter] = useState(null);
 
   const navigate = useNavigate();
   const location = useLocation();
 
   const params = new URLSearchParams(location.search);
-  const [query, setQuery] = useState(params.get("query"));
+  console.log(params.get("query"));
+  const [query, setQuery] = useState(params.get("query") ?? "");
 
-  const fetchData = () => {
+  const fetchData = async () => {
     // frontend routing
     const params = new URLSearchParams({ query: query });
     navigate(
@@ -44,63 +71,101 @@ function App() {
       { replace: true },
     );
 
+    console.log(query);
+
     // fetch data
-    axios
+    await axios
       .post("http://localhost:5000/data", {
-        query: query,
+        query,
+        size: query === "" ? "all" : 10,
       })
       .then((res) => {
         console.log(res.data);
-        setData(res.data);
+        setData(query ? res.data : null);
+        setCategory(res.data.aggregations);
+      })
+      .catch((err) => console.log(err));
+  };
+
+  const preloadImages = () => {
+    // fetch all data to preload images
+    axios
+      .post("http://localhost:5000/data", {
+        query,
+        size: "all",
+      })
+      .then((res) => {
+        console.log(res.data);
+        window["imgs_url"] = {};
+        res.data.hits.hits?.forEach((emoji) => {
+          const newImage = new Image();
+          newImage.src = emoji._source.url;
+          window["imgs_url"][emoji._source.name] = newImage;
+        });
+        console.log(window["imgs_url"]["muscle"]);
       })
       .catch((err) => console.log(err));
   };
 
   useEffect(() => {
     fetchData();
+    preloadImages();
   }, []);
+
+  useEffect(() => {
+    console.log("filter");
+  }, [filter]);
 
   return (
     <div className="App">
       <header className="App-header">
-        {/* <img src={logo} className="App-logo" alt="logo" /> */}
         <p>Markdown Emoji Search</p>
-        {/* <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {message?.data ?? "none"}
-        </a> */}
-        <input
-          name="query"
-          type="text"
-          onChange={(e) => {
-            setQuery(e.target.value);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") fetchData();
-          }}
-        />
-        <Button
-          variant="primary"
-          as="input"
-          type="button"
-          value="Search"
-          onClick={fetchData}
-        />
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "center",
-            marginTop: 40,
-          }}
-        >
-          <EmojiCards data={data} />
-        </div>
       </header>
+      <div style={{ display: "flex", height: "100vh" }}>
+        <div className="App-category">
+          <h4 style={{ color: "#5f5f95" }}>Category</h4>
+          <Category category={category} setFilter={setFilter} />
+        </div>
+        <div className="App-result">
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <input
+              name="query"
+              type="text"
+              onChange={(e) => {
+                setQuery(e.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") fetchData();
+              }}
+              style={{ margin: 12 }}
+              autoComplete="off"
+            />
+            <Button
+              variant="primary"
+              as="input"
+              type="button"
+              value="Search"
+              onClick={fetchData}
+            />
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              marginTop: 40,
+            }}
+          >
+            <EmojiCards data={data} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
