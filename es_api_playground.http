@@ -50,7 +50,7 @@ Content-Type: application/json
         }
     },
     "query": {
-        "match_all": {
+        "multi_match": {
             "query": "body",
             "fields": ["name^3", "category", "sub_category"]
         }
@@ -68,4 +68,16 @@ Content-Type: application/json
         }
     },
     "size":10
+}
+
+###
+GET {{ES_host}}/emoji/_search
+Content-Type: application/json
+
+{
+    "query": {
+        "match_all": {
+            "query": "body"
+        }
+    }
 }

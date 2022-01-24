@@ -38,7 +38,7 @@ class SearchEngineHandler:
                 "properties": {
                     "name": {
                         "type": "text",
-                        "analyzer": "standard",
+                        "analyzer": "my_analyzer",
                         "fields": {
                             "keyword": {
                                 "type": "keyword"
@@ -51,7 +51,7 @@ class SearchEngineHandler:
                     },
                     "category": {
                         "type": "text",
-                        "analyzer": "standard",
+                        "analyzer": "my_analyzer",
                         "fields": {
                             "keyword": {
                                 "type": "keyword"
@@ -64,7 +64,7 @@ class SearchEngineHandler:
                     },
                     "sub_category": {
                         "type": "text",
-                        "analyzer": "standard",
+                        "analyzer": "my_analyzer",
                         "fields": {
                             "keyword": {
                                 "type": "keyword"

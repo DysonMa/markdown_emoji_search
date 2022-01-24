@@ -16,11 +16,6 @@ def serve():
         print(request.args.get("query"))
     return send_from_directory(app.static_folder, "index.html")
 
-# @app.route("/", methods=["POST"])
-# def form():
-#     query = request.form["query"]
-#     print(query)
-
 api.add_resource(ApiHandler, "/data")
 
 if __name__ == '__main__':

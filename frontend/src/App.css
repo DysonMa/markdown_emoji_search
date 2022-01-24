@@ -26,7 +26,7 @@
 
 .App-body {
   background-color: #282c34;
-  height: 100vh;
+  /* height: 100vh; */
   /* min-height: 100vh; */
   /* display: flex; */
   /* flex-direction: column; */
@@ -51,7 +51,7 @@
 
 .App-category {
   background-color: #a8bce6;
-  height: 100vh;
+  /* height: 100vh; */
   display: flex;
   /* flex-grow: 1; */
   width: 30vw;
@@ -64,7 +64,7 @@
 
 .App-result {
   background-color: #cdd7ec;
-  height: 100vh;
+  height: 130vh;
   display: flex;
   flex-grow: 10;
   flex-direction: column;

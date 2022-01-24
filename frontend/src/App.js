@@ -121,7 +121,7 @@ function App() {
       <header className="App-header">
         <p>Markdown Emoji Search</p>
       </header>
-      <div style={{ display: "flex", height: "100vh" }}>
+      <div style={{ display: "flex" /*height: "100vh"*/ }}>
         <div className="App-category">
           <h4 style={{ color: "#5f5f95" }}>Category</h4>
           <Category category={category} setFilter={setFilter} />
