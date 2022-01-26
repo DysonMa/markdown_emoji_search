@@ -6,23 +6,30 @@ import argparse
 
 
 class Fetcher:
-    def __init__(self, is_fetch_github_imgs=False) -> None:
-        self.is_fetch_github_imgs = is_fetch_github_imgs
+    def __init__(self, args: Dict) -> None:
+        self.args = args
+        self.is_fetch_github_imgs = self.args.is_fetch_github_imgs
 
-        self.img_urls_filename = "emoji_github_img_urls.json"
-        self.emoji_filename = "emoji.json"
-        
         self.root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
-        self.folder_path = os.path.abspath(os.path.join(self.root_path, "data"))
+        self.setting_file = os.path.abspath(os.path.join(self.root_path, self.args.settings))
+        
+        # load config
+        self.config = {}
+        with open(self.setting_file, "r") as f:
+            self.config = json.loads(f.read())
+        
+        self.folder_path = os.path.abspath(os.path.join(self.root_path, self.config["STORAGE"]["folderName"]))
+
+        self.img_urls_filename = self.config["STORAGE"]["img_urls_fileName"]
+        self.emoji_filename = self.config["STORAGE"]["emoji_fileName"]
         self.img_urls_file_path = os.path.abspath(os.path.join(self.folder_path, self.img_urls_filename))
         self.emoji_file_path = os.path.abspath(os.path.join(self.folder_path, self.emoji_filename))
         
         self.img_urls = None
 
-
     # fetch emoji image urls from github api
     def __fetch_img_urls(self) -> None:
-        img_res = rq.get("https://api.github.com/emojis", verify=False)
+        img_res = rq.get(self.config["FETCHER"]["github_imgs_url"], verify=False)
         img_urls = json.loads(img_res.text)
         with open(self.img_urls_file_path, "w", encoding='utf-8') as f:
             json.dump(img_urls, f, ensure_ascii=False, indent=4)
@@ -34,7 +41,7 @@ class Fetcher:
     # fetch emoji cheatsheet
     def __fetch_emoji_cheatsheet(self) -> None:
         try:
-            res = rq.get("https://github.com/ikatyang/emoji-cheat-sheet/blob/master/README.md#smileys--emotion")
+            res = rq.get(self.config["FETCHER"]["emoji_cheatsheet_url"])
             doc = pq(res.text)
 
             if self.img_urls == None:
@@ -74,7 +81,12 @@ class Fetcher:
 
 
 if __name__=="__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--fetch', help='fetch github img urls or not', action="store_true")
     
-    Fetcher().run()
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument('-s', '--settings', help='setting file', default="settings.json")
+    parser.add_argument('-f', '--is_fetch_github_imgs', help='fetch github img urls or not', action="store_true")
+    
+    args = parser.parse_args()
+    
+    Fetcher(args).run()

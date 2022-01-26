@@ -1,0 +1,97 @@
+{
+  "FETCHER": {
+    "github_imgs_url": "https://api.github.com/emojis",
+    "emoji_cheatsheet_url": "https://github.com/ikatyang/emoji-cheat-sheet/blob/master/README.md"
+  },
+  "STORAGE": {
+    "folderName": "data",
+    "data_to_es_fileName": "data_to_es.json",
+    "img_urls_fileName": "emoji_github_img_urls.json",
+    "emoji_fileName": "emoji.json"
+  },
+  "ELASTICSEARCH": {
+    "host": "http://localhost:9200",
+    "index": "emoji",
+    "mappings": {
+      "settings": {
+        "analysis": {
+          "analyzer": {
+            "my_analyzer": {
+              "tokenizer": "my_tokenizer",
+              "filter": ["lowercase", "my_stemmer"]
+            }
+          },
+          "tokenizer": {
+            "my_tokenizer": {
+              "type": "ngram"
+            }
+          },
+          "filter": {
+            "my_stemmer": {
+              "type": "stemmer",
+              "language": "english"
+            }
+          }
+        },
+        "number_of_replicas": 0
+      },
+      "mappings": {
+        "properties": {
+          "name": {
+            "type": "text",
+            "analyzer": "my_analyzer",
+            "fields": {
+              "keyword": {
+                "type": "keyword"
+              },
+              "completion": {
+                "type": "completion",
+                "analyzer": "standard"
+              }
+            }
+          },
+          "category": {
+            "type": "text",
+            "analyzer": "my_analyzer",
+            "fields": {
+              "keyword": {
+                "type": "keyword"
+              },
+              "completion": {
+                "type": "completion",
+                "analyzer": "standard"
+              }
+            }
+          },
+          "sub_category": {
+            "type": "text",
+            "analyzer": "my_analyzer",
+            "fields": {
+              "keyword": {
+                "type": "keyword"
+              },
+              "completion": {
+                "type": "completion",
+                "analyzer": "standard"
+              }
+            }
+          },
+          "labels": {
+            "type": "text",
+            "analyzer": "my_analyzer",
+            "fields": {
+              "keyword": {
+                "type": "keyword"
+              },
+              "completion": {
+                "type": "completion",
+                "analyzer": "standard"
+              }
+            }
+          }
+        }
+      }
+    },
+    "max_size": 10000
+  }
+}

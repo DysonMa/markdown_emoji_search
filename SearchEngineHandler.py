@@ -3,93 +3,40 @@ from elasticsearch import helpers
 import json, os
 from typing import Dict, List
 
+# CONFIG = json.load(os.path.abspath("settings.json"))
+
 class SearchEngineHandler:
     def __init__(self) -> None:
-        self.filename = "data_to_es.json"
+        # load config
+        # TODO:
+        self.config = {}
+        with open(os.path.abspath("settings.json"), "r") as f:
+            self.config = json.loads(f.read())
 
-        self.root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
-        self.folder_path = os.path.abspath(os.path.join(self.root_path, "data"))
+        self.folder_path = self.config["STORAGE"]["folderName"]
+        self.filename = self.config["STORAGE"]["data_to_es_fileName"]
         self.data_file_path = os.path.abspath(os.path.join(self.folder_path, self.filename))
 
         self.data = None
         self.es = Elasticsearch(
-            hosts="http://localhost:9200", # TODO:
+            hosts=self.config["ELASTICSEARCH"]["host"],
             timeout=300
         )
-        self.MAPPINGS = {
-            "settings": {
-                "analysis": {
-                    "analyzer": {
-                        "my_analyzer": {
-                            "tokenizer": "my_tokenizer",
-                            "filter": "lowercase"
-                        }
-                    },
-                    "tokenizer": {
-                        "my_tokenizer": {
-                            "type": "ngram"
-                        }
-                    }
-
-                },
-                "number_of_replicas": 0
-            },
-            "mappings": {
-                "properties": {
-                    "name": {
-                        "type": "text",
-                        "analyzer": "my_analyzer",
-                        "fields": {
-                            "keyword": {
-                                "type": "keyword"
-                            },
-                            "completion": {
-                                "type": "completion",
-                                "analyzer": "standard"
-                            }
-                        }
-                    },
-                    "category": {
-                        "type": "text",
-                        "analyzer": "my_analyzer",
-                        "fields": {
-                            "keyword": {
-                                "type": "keyword"
-                            },
-                            "completion": {
-                                "type": "completion",
-                                "analyzer": "standard"
-                            }
-                        }
-                    },
-                    "sub_category": {
-                        "type": "text",
-                        "analyzer": "my_analyzer",
-                        "fields": {
-                            "keyword": {
-                                "type": "keyword"
-                            },
-                            "completion": {
-                                "type": "completion",
-                                "analyzer": "standard"
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        self.index = self.config["ELASTICSEARCH"]["index"]
+        self.MAPPINGS = self.config["ELASTICSEARCH"]["mappings"]
+        self.max_size = self.config["ELASTICSEARCH"]["max_size"]
 
     def __delete_index(self) -> None:
         try:
-            self.es.indices.delete(index="emoji")
-            print("Successfully delete index ")
+            self.es.indices.delete(index=self.index)
+            print(f"Successfully delete index {self.index}")
         except Exception as e:
             print(e)
 
     def __create_index(self) -> None:
         try:
-            self.es.indices.create(index="emoji", body=self.MAPPINGS)
-            print("Successfully create index ")
+            self.es.indices.create(index=self.index, body=self.MAPPINGS)
+            print(f"Successfully create index {self.index}")
         except Exception as e:
             print(e)
 
@@ -98,12 +45,84 @@ class SearchEngineHandler:
             self.__delete_index()
             self.__create_index()
             helpers.bulk(self.es, data)
-            print("Successfully import data")
+            print(f"Successfully import data to index {self.index}")
         except Exception as error:
             print(error)
 
-    def search(self, query: str, size: int = 10) -> List:
-        res = self.es.search(index="emoji", body={
+    def search(self, query: str, identifier:str, size: int) -> List:
+
+        query_clause = {}
+        if query:
+            query_clause = {
+                "must": {
+                    "multi_match": {
+                        "query": query,
+                        "fields": ["name"]
+                    }
+                }
+            }
+
+        filter_clause = {}
+        if identifier:
+            filter_clause = {
+                "filter": {
+                    "term": {
+                        "labels.keyword": identifier
+                    }
+                }
+            }
+
+        # print(query_clause)
+        # print(filter_clause)
+
+        query_group_clause = {}
+        if query_clause!={} or filter_clause!={}:
+            query_group_clause = {
+                "query": {
+                    "bool": {
+                        **query_clause,
+                        **filter_clause
+                    }
+                }
+            }
+
+        # aggregation
+        aggs_clause = {
+            "aggs": {
+                "labels": {
+                    "terms": {
+                        "field": "labels.keyword",
+                        "size": size,
+                        "order": {
+                            "max_score": "desc"
+                        }
+                    },
+                    "aggs": {
+                        "max_score": {
+                            "max": {
+                                "script": "_score"
+                            }
+                        }
+                    }
+                },
+            },
+        }
+
+        # print(query_group_clause)
+
+        body = {
+            **aggs_clause,
+            **query_group_clause,
+            "size": size
+        }
+
+        print(body)
+
+        res = self.es.search(index=self.index, body=body)
+        return res
+
+    def filter(self, identifer:str, size: int=10) -> List:
+        res = self.es.search(index=self.index, body={
             "aggs": {
                 "category": {
                     "terms": {
@@ -139,9 +158,8 @@ class SearchEngineHandler:
                 }
             },
             "query": {
-                "multi_match": {
-                    "query": query,
-                    "fields": ["name", "category", "sub_category"]
+                "term": {
+                    "labels.keyword": identifer,
                 },
             },
             "size": size
@@ -149,12 +167,13 @@ class SearchEngineHandler:
         return res
 
     def searchAll(self) -> List:
-        res = self.es.search(index="emoji", body={
+        # aggregation
+        aggs_clause = {
             "aggs": {
-                "category": {
+                "labels": {
                     "terms": {
-                        "field": "category.keyword",
-                        "size": 1000,
+                        "field": "labels.keyword",
+                        "size": self.max_size,
                         "order": {
                             "max_score": "desc"
                         }
@@ -167,31 +186,18 @@ class SearchEngineHandler:
                         }
                     }
                 },
-                "sub_category": {
-                    "terms": {
-                        "field": "sub_category.keyword",
-                        "size": 1000,
-                        "order": {
-                            "max_score": "desc"
-                        }
-                    },
-                    "aggs": {
-                        "max_score": {
-                            "max": {
-                                "script": "_score"
-                            }
-                        }
-                    }
-                }
             },
+        }
+        res = self.es.search(index=self.index, body={
+            **aggs_clause,
             "query": {
                 "match_all": {}
             },
-            "size": 1000  # max num in ES
+            "size": self.max_size
         })
         return res
 
 
 if __name__=="__main__":
-    result = SearchEngineHandler().search(query="bow")
+    result = SearchEngineHandler().search()
     print(result)

@@ -18,7 +18,7 @@ Content-Type: application/json
     "aggs": {
         "category": {
             "terms": {
-                "field": "category.keyword",
+                "field": "label.keyword",
                 "size": 10,
                 "order": {
                     "max_score": "desc"
@@ -51,8 +51,8 @@ Content-Type: application/json
     },
     "query": {
         "multi_match": {
-            "query": "body",
-            "fields": ["name^3", "category", "sub_category"]
+            "query": "smiling",
+            "fields": ["name"]
         }
     },
     "suggest": {
@@ -75,9 +75,60 @@ GET {{ES_host}}/emoji/_search
 Content-Type: application/json
 
 {
+    "aggs": {
+        "labels": {
+            "terms": {
+                "field": "labels.keyword",
+                "size": 10,
+                "order": {
+                    "max_score": "desc"
+                }
+            },
+            "aggs": {
+                "max_score": {
+                    "max": {
+                        "script": "_score"
+                    }
+                }
+            }
+        }
+    },
     "query": {
-        "match_all": {
-            "query": "body"
+        "bool": {
+            "must": {
+                "multi_match": {
+                    "query": "smiling",
+                    "fields": ["name"]
+                }
+            },
+            "filter": {
+                "term": {
+                    "labels.keyword": "COMPUTER"
+                }
+            }
+        }
+    },
+    "size": 10
+}
+
+###
+GET {{ES_host}}/emoji/_search
+Content-Type: application/json
+
+{
+    "query": {
+        "multi_match": {
+            "query": "smiling",
+            "fields": ["name"]
         }
     }
+}
+
+###
+GET {{ES_host}}/emoji/_analyze
+Content-Type: application/json
+
+{
+    "text": "smiling",
+    "field": "name"
 }
