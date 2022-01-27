@@ -2,6 +2,7 @@ from ast import Import
 import json, os, sys
 from typing import Dict, List
 import argparse
+import logging
 
 root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
 sys.path.insert(0, root_path)
@@ -36,12 +37,23 @@ class Importer:
             self.data = self.__read_file()
             SearchEngineHandler().import_data(self.data)
         except Exception as error:
-            print(error)
+            logging.error(error)
 
     def run(self) -> None:
-        self.__import()
+        try:
+            self.__import()
+        except Exception as error:
+            logging.error(error)
 
 if __name__=="__main__":
+    FORMAT = '%(asctime)s %(levelname)s: %(message)s'
+    logging.basicConfig(
+        level=logging.ERROR,
+        filename='importer.log',
+        filemode='w',
+        format=FORMAT
+    )
+
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--settings', help='setting file', default="settings.json")
     args = parser.parse_args()

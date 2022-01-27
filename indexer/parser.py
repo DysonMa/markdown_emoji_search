@@ -1,8 +1,7 @@
 import re, json, os
 from typing import Dict, List
 import argparse
-
-INDEX = "emoji"
+import logging
 
 class Parser:
     def __init__(self, args: Dict) -> None:
@@ -56,16 +55,25 @@ class Parser:
             with open(self.export_file_path, "w", encoding="utf-8") as f:
                 json.dump(self.data, f, ensure_ascii=False, indent=4)
 
-            print("Done")
+            logging.info("Parser is Done")
 
         except Exception as error:
-            print(error)
+            logging.error(error)
 
     def run(self) -> None:
         self.__parse()
 
 
 if __name__=="__main__":
+
+    FORMAT = '%(asctime)s %(levelname)s: %(message)s'
+    logging.basicConfig(
+        level=logging.ERROR,
+        filename='parser.log',
+        filemode='w',
+        format=FORMAT
+    )
+
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--settings', help='setting file', default="settings.json")
     args = parser.parse_args()

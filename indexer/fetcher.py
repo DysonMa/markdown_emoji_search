@@ -3,6 +3,7 @@ from pyquery import PyQuery as pq
 from typing import Dict
 import re, json, os
 import argparse
+import logging
 
 
 class Fetcher:
@@ -68,19 +69,29 @@ class Fetcher:
             with open(self.emoji_file_path, "w", encoding='utf-8') as f:
                 json.dump(emoji_table, f, ensure_ascii=False, indent=4)
 
-            print("Done")
+            logging.info("Fetcher is Done")
 
         except Exception as error:
-            print(error)
+            logging.error(error)
 
     def run(self) -> None:
-        if self.is_fetch_github_imgs:
-            self.img_urls = self.__fetch_img_urls()
-        self.img_urls = self.__get_emoji_urls_from_files()
-        self.__fetch_emoji_cheatsheet()
+        try:
+            if self.is_fetch_github_imgs:
+                self.img_urls = self.__fetch_img_urls()
+            self.img_urls = self.__get_emoji_urls_from_files()
+            self.__fetch_emoji_cheatsheet()
+        except Exception as err:
+            logging.error(err)
 
 
 if __name__=="__main__":
+    FORMAT = '%(asctime)s %(levelname)s: %(message)s'
+    logging.basicConfig(
+        level=logging.ERROR,
+        filename='fetcher.log',
+        filemode='w',
+        format=FORMAT
+    )
     
     parser = argparse.ArgumentParser()
     

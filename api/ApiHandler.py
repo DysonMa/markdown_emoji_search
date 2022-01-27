@@ -2,6 +2,7 @@ from flask import request
 from flask_restful import Api, Resource
 import os, sys
 from SearchEngineHandler import SearchEngineHandler
+from elasticsearch.exceptions import ConnectionError as ElasticConnectionError
 
 class ApiHandler(Resource):
     def get(self):
@@ -13,16 +14,20 @@ class ApiHandler(Resource):
         
         # get each argument
         DEFAULT_QUERY = ""
-        DEFAULT_SIZE = 10
         DEFAULT_IDENTIFIER = ""
+        DEFAULT_FROM = 0
+        DEFAULT_SIZE = 10
+        
         query = args.get("query", DEFAULT_QUERY)
+        identifier = args.get("identifier", DEFAULT_IDENTIFIER)
+        fromPage = args.get("from", DEFAULT_FROM)
         size = args.get("size", DEFAULT_SIZE)
-        identifier = request.args.get("identifier", DEFAULT_IDENTIFIER)
 
-        print(query)
-        print(identifier)
-        print(size)
+        print("query", query)
+        print("identifier", identifier)
+        print("fromPage", fromPage)
+        print("size", size)
 
         if isinstance(size, str) and size.upper()=="ALL" :
             return SearchEngineHandler().searchAll()
-        return SearchEngineHandler().search(query=query, identifier=identifier, size=size)
+        return SearchEngineHandler().search(query=query, identifier=identifier, fromPage=fromPage, size=size)

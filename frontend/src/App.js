@@ -2,7 +2,13 @@ import "./App.css";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
-import { EmojiCards, Category, Searchbar } from "./Components";
+import {
+  EmojiCards,
+  Category,
+  Searchbar,
+  SizePerPage,
+  Pagination,
+} from "./Components";
 
 function App() {
   // frontend routing
@@ -11,19 +17,20 @@ function App() {
 
   const [data, setData] = useState(null);
   const [category, setCategory] = useState(null);
-  const [size, setSize] = useState(0);
 
   const params = new URLSearchParams(location.search);
 
   const [query, setQuery] = useState(params.get("query") ?? "");
   const [identifier, setIdentifier] = useState(params.get("identifier") ?? "");
+  const [from, setFrom] = useState(params.get("from") ?? 0);
+  const [size, setSize] = useState(params.get("size") ?? 10);
 
   console.log(query);
   console.log(identifier);
 
   const fetchData = async () => {
     // frontend routing
-    const params = new URLSearchParams({ query, identifier });
+    const params = new URLSearchParams({ query, identifier, from, size });
     navigate(
       { pathname: location.pathname, search: params.toString() },
       { replace: true },
@@ -34,6 +41,7 @@ function App() {
       .post("http://localhost:5000/data", {
         query,
         identifier,
+        from,
         size: !query && !identifier ? "all" : size,
       })
       .then((res) => {
@@ -41,7 +49,7 @@ function App() {
         setData(query || identifier ? res.data : null); // must type any query or select any identifier
         setCategory(res.data.aggregations);
       })
-      .catch((err) => console.log(err));
+      .catch((err) => console.error(err));
   };
 
   const preloadImages = () => {
@@ -60,13 +68,17 @@ function App() {
           window["imgs_url"][emoji._source.name] = newImage;
         });
       })
-      .catch((err) => console.log(err));
+      .catch((err) => console.error(err));
   };
 
   useEffect(() => {
     fetchData();
     preloadImages();
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [size, from]);
 
   // useEffect(() => {
   //   console.log(identifier);
@@ -85,6 +97,20 @@ function App() {
         </div>
         <div className="App-result">
           <Searchbar setQuery={setQuery} fetchData={fetchData} />
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Pagination
+              total={data?.hits.total.value ?? 0}
+              size={size}
+              setFrom={setFrom}
+            />
+            <SizePerPage size={size} setSize={setSize} />
+          </div>
           <EmojiCards data={data} />
         </div>
       </div>

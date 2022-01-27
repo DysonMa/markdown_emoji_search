@@ -1,4 +1,6 @@
+import React, { useEffect, useState } from "react";
 import { Button, Card, Container, Row, Col } from "react-bootstrap";
+import "./Components.css";
 
 // search results
 export const EmojiCards = ({ data }) => {
@@ -73,7 +75,7 @@ export const Searchbar = ({ setQuery, fetchData }) => {
     >
       <input
         name="query"
-        type="text"
+        type="search"
         onChange={(e) => {
           setQuery(e.target.value);
         }}
@@ -90,6 +92,82 @@ export const Searchbar = ({ setQuery, fetchData }) => {
         value="Search"
         onClick={fetchData}
       />
+    </div>
+  );
+};
+
+// size per page selector
+export const SizePerPage = ({ size, setSize }) => {
+  const [selectedSize, setSelectedSize] = useState(size);
+
+  const onChange = (e) => {
+    setSelectedSize(e.target.value);
+  };
+
+  useEffect(() => {
+    setSize(selectedSize);
+  }, [selectedSize]);
+
+  return (
+    <div>
+      <label htmlFor="page">Cards per page</label>
+      <select id="page" onChange={onChange}>
+        <option value={10}>10</option>
+        <option value={20}>20</option>
+        <option value={30}>30</option>
+      </select>
+    </div>
+  );
+};
+
+export const Pagination = ({ total, size, setFrom }) => {
+  const MAX_DISPLAY_PAGE_COUNT = 5;
+  const totalPage = Math.floor(total / size) + 1;
+  const [activePage, setActivePage] = useState(1);
+
+  useEffect(() => {
+    setFrom(size * (activePage - 1));
+  }, [activePage]);
+
+  // console.log(total);
+  // console.log(size);
+  // console.log(totalPage);
+  // console.log(activePage);
+
+  const onClick = (e, pg) => {
+    setActivePage(pg);
+    return false;
+  };
+
+  // create each page link number
+  const pageLinks = [];
+  for (let pg = 1; pg <= totalPage; pg++) {
+    if (pg < MAX_DISPLAY_PAGE_COUNT || pg === totalPage) {
+      pageLinks.push(
+        <a
+          href="#"
+          onClick={(e) => onClick(e, pg)}
+          className={pg === activePage ? "active" : null}
+          key={pg}
+        >
+          {pg}
+        </a>,
+      );
+    }
+    if (pg === MAX_DISPLAY_PAGE_COUNT) {
+      pageLinks.push(<p style={{ display: "inline" }}>...</p>);
+    }
+  }
+
+  return (
+    <div className="pagination">
+      <a href="#" onClick={(e) => onClick(e, activePage - 1)}>
+        &laquo;
+      </a>
+      {pageLinks}
+      <a href="#" onClick={(e) => onClick(e, activePage + 1)}>
+        &raquo;
+      </a>
     </div>
   );
 };
