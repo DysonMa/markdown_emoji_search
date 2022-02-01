@@ -10,6 +10,8 @@ import {
   Pagination,
 } from "./Components";
 
+const CONFIG = require("./settings.json");
+
 function App() {
   // frontend routing
   const navigate = useNavigate();
@@ -20,13 +22,21 @@ function App() {
 
   const params = new URLSearchParams(location.search);
 
-  const [query, setQuery] = useState(params.get("query") ?? "");
-  const [identifier, setIdentifier] = useState(params.get("identifier") ?? "");
-  const [from, setFrom] = useState(params.get("from") ?? 0);
-  const [size, setSize] = useState(params.get("size") ?? 10);
+  const [query, setQuery] = useState(
+    params.get("query") ?? CONFIG["SEARCH"]["default_query"],
+  );
+  const [identifier, setIdentifier] = useState(
+    params.get("identifier") ?? CONFIG["SEARCH"]["default_identifier"],
+  );
+  const [from, setFrom] = useState(
+    params.get("from") ?? CONFIG["SEARCH"]["default_from"],
+  );
+  const [size, setSize] = useState(
+    params.get("size") ?? CONFIG["SEARCH"]["default_size"],
+  );
 
-  console.log(query);
-  console.log(identifier);
+  console.log("query: ", query);
+  console.log("identifier: ", identifier);
 
   const fetchData = async () => {
     // frontend routing
@@ -38,7 +48,7 @@ function App() {
 
     // fetch data
     await axios
-      .post("http://localhost:5000/data", {
+      .post(CONFIG["SEARCH"]["api_uri"], {
         query,
         identifier,
         from,
@@ -55,7 +65,7 @@ function App() {
   const preloadImages = () => {
     // fetch all data to preload images
     axios
-      .post("http://localhost:5000/data", {
+      .post(CONFIG["SEARCH"]["api_uri"], {
         query,
         size: "all",
       })
@@ -100,6 +110,7 @@ function App() {
           <div
             style={{
               display: "flex",
+              flexDirection: "column",
               justifyContent: "space-between",
               alignItems: "center",
             }}

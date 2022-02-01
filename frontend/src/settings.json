@@ -1,0 +1,9 @@
+{
+  "SEARCH": {
+    "api_uri": "http://localhost:5000/data",
+    "default_query": "",
+    "default_identifier": "",
+    "default_from": 0,
+    "default_size": 5
+  }
+}

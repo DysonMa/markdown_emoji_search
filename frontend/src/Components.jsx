@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, Card, Container, Row, Col } from "react-bootstrap";
+import { Button, Card } from "react-bootstrap";
 import "./Components.css";
 
 // search results
@@ -49,16 +49,15 @@ export const EmojiCards = ({ data }) => {
 // filters
 export const Category = ({ category, setIdentifier }) => {
   if (!category) return null;
-  console.log(category.labels);
+  // console.log(category.labels);
   return category.labels.buckets.map((label, idx) => (
     <div
       key={idx}
-      style={{ margin: 12 }}
+      style={{ margin: 12, width: "20vw" }}
       // onClick={() => setIdentifier(label.key)}
     >
-      <u>
-        {label.key}&nbsp;&nbsp;{label.doc_count}
-      </u>
+      <u>{label.key}</u>
+      <div>{label.doc_count}</div>
     </div>
   ));
 };
@@ -71,6 +70,7 @@ export const Searchbar = ({ setQuery, fetchData }) => {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
+        margin: "10px 0",
       }}
     >
       <input
@@ -109,12 +109,12 @@ export const SizePerPage = ({ size, setSize }) => {
   }, [selectedSize]);
 
   return (
-    <div>
-      <label htmlFor="page">Cards per page</label>
+    <div style={{ display: "flex" }}>
+      <div style={{ marginRight: 20 }}>Cards per page</div>
       <select id="page" onChange={onChange}>
+        <option value={5}>5</option>
         <option value={10}>10</option>
-        <option value={20}>20</option>
-        <option value={30}>30</option>
+        <option value={15}>15</option>
       </select>
     </div>
   );
@@ -155,17 +155,29 @@ export const Pagination = ({ total, size, setFrom }) => {
       );
     }
     if (pg === MAX_DISPLAY_PAGE_COUNT) {
-      pageLinks.push(<p style={{ display: "inline" }}>...</p>);
+      pageLinks.push(
+        <a href="#" id="dot" key={pg}>
+          ...
+        </a>,
+      );
     }
   }
 
   return (
     <div className="pagination">
-      <a href="#" onClick={(e) => onClick(e, activePage - 1)}>
+      <a
+        href="#"
+        onClick={(e) => onClick(e, activePage - 1)}
+        className={activePage === 1 ? "disabled" : null}
+      >
         &laquo;
       </a>
       {pageLinks}
-      <a href="#" onClick={(e) => onClick(e, activePage + 1)}>
+      <a
+        href="#"
+        onClick={(e) => onClick(e, activePage + 1)}
+        className={activePage === totalPage ? "disabled" : null}
+      >
         &raquo;
       </a>
     </div>
