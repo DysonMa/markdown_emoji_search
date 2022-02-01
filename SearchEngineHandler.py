@@ -5,8 +5,6 @@ import json, os, sys
 from typing import Dict, List
 import logging
 
-# CONFIG = json.load(os.path.abspath("settings.json"))
-
 FORMAT = '%(asctime)s %(levelname)s: %(message)s'
 logging.basicConfig(
     level=logging.ERROR,
@@ -17,12 +15,10 @@ logging.basicConfig(
 
 class SearchEngineHandler:
     def __init__(self, settings="settings.json") -> None:
-        # load config
-        # TODO:
         try:
-            self.settings = settings
+            self.settings = os.path.abspath(os.path.join(os.path.dirname(__file__), settings))
             self.config = {}
-            with open(os.path.abspath(self.settings), "r") as f:
+            with open(self.settings, "r") as f:
                 self.config = json.loads(f.read())
 
             self.folder_path = self.config["STORAGE"]["folderName"]

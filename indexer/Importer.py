@@ -20,7 +20,7 @@ class Importer:
         self.config = {}
         with open(self.setting_file, "r") as f:
             self.config = json.loads(f.read())
-        
+
         self.folder_path = os.path.abspath(os.path.join(self.root_path, self.config["STORAGE"]["folderName"]))
         
         self.filename = self.config["STORAGE"]["data_to_es_fileName"]
